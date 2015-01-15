@@ -9,6 +9,7 @@ ADD Gemfile.lock /app/
 
 RUN apt-get update && apt-get upgrade -y && \
     apt-get install -y mongodb-clients && \
+    locale-gen en_US.UTF-8 && \
     bundle install && \
     mkdir /out
 
