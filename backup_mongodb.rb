@@ -101,8 +101,13 @@ sanitized_subject_fields = %w(activated_at classification_count coords created_a
 sanitized_classification_fields = %w(annotations created_at project_id subject_ids subjects tutorial updated_at user_id workflow_id)
 sanitized_group_fields = %w(categories classification_count created_at metadata name project_id project_name random state stats subjects updated_at zooniverse_id)
 
+puts "* Starting sanitized backups"
+
 config['sanitized_projects'].each_pair do |id, emails|
   project = @projects[id]
+
+  puts "    * Backing up #{project[:name]}"
+
   sanitized_project_threads = []
   sanitized_output = "sanitized_#{ project[:output] }"
 
@@ -147,7 +152,11 @@ config['sanitized_projects'].each_pair do |id, emails|
   project.delete :email_line
 end
 
+puts "* Starting per-project backups"
+
 @projects.each_pair do |id, project|
+  puts "    * Backing up #{project[:name]}"
+
   project_threads = []
 
   project_threads << Thread.new do
@@ -185,6 +194,8 @@ end
 end
 
 `rm -rf project_dumps`
+
+puts "* Starting complete Ouroboros backup"
 
 `#{ mongodump } --out ouroboros_#{ @timestamp }`
 
@@ -229,9 +240,14 @@ talk_only_file_name = "ouroboros_#{ @timestamp }_talk_only.tar.gz"
 
 Dir.chdir 'backups'
 
+puts "    * Uploading complete backup"
 complete_upload = upload 'Ouroboros', complete_file_name, complete_file_name
+puts "    * Uploading filtered backup"
 filtered_upload = upload 'Filtered Ouroboros', filtered_file_name, filtered_file_name
+puts "    * Uploading talk backup"
 talk_upload = upload 'Talk only', talk_only_file_name, talk_only_file_name
+
+puts "* Sending notification emails"
 
 email = [
   "Ouroboros Backup #{ @timestamp }: 1 complete backup and #{ @projects.length } project backups.",
@@ -277,3 +293,5 @@ config['project_mailings'].each do |id, emails|
   end
   mail.deliver!
 end
+
+puts "Backup complete"
