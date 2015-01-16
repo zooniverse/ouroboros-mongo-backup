@@ -277,5 +277,3 @@ config['project_mailings'].each do |id, emails|
   end
   mail.deliver!
 end
-
-`rm -rf #{out_dir}/*`
