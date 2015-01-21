@@ -294,4 +294,9 @@ config['project_mailings'].each do |id, emails|
   mail.deliver!
 end
 
+
+puts "* Cleaning up"
+
+`rm -rf #{output_dir}/*`
+
 puts "Backup complete"
