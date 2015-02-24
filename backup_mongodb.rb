@@ -273,9 +273,12 @@ mail = Mail.new do
 end
 mail.deliver!
 
+
+filtered_recipients = ['sysadmins@zooniverse.org'] + config.fetch('filtered_recipients', [])
+
 filtered_mail = Mail.new do
   from 'team@zooniverse.org'
-  to %w(sysadmins@zooniverse.org)
+  to filtered_recipients
   subject "Ouroboros MongoDB Backup #{ @timestamp }"
   body filtered_email
 end
