@@ -30,7 +30,7 @@ end
 
 unless mongo_host != nil
   puts 'No secondary MongoDB server found. Aborting'
-  exit
+  abort
 end
 
 puts "Found secondary MongoDB server: #{mongo_host}"
