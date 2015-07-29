@@ -56,6 +56,7 @@ end
 Dir.chdir output_dir
 Dir.mkdir 'backups'
 Dir.mkdir "backups/ouroboros_projects"
+Dir.mkdir "backups/standalone_projects"
 
 connection = Mongo::ReplSetConnection.new config['mongo']['hosts'], { name: config['mongo']['ouroboros']['rs_name'] }
 mongo = connection[config['mongo']['ouroboros']['db_name']]
@@ -95,6 +96,36 @@ def upload(name, path, file_path, id = nil)
   else
     "Backed up #{ name } (#{ '%.3f' % (file_size.to_f / 1048576)}) MB (#{ url })"
   end
+end
+
+puts "* Starting standalone backups"
+
+config.fetch('standalone_projects', {}).each_pair do |name, h|
+  @projects[name] = {}
+  puts "    * Backing up #{name}"
+
+  `mkdir -p standalone_dumps/#{name}`
+  `mongodump --host #{h['host']}:#{h['port']} --db #{h['database']} -u #{h['username']} -p #{h['password']} --out standalone_dumps/#{name}/`
+
+  `cd standalone_dumps; tar czvf #{name}.tar.gz #{name}`
+  `rm -rf standalone_dumps/#{name}`
+  `mv standalone_dumps/#{name}.tar.gz backups/standalone_projects/#{name}.tar.gz`
+
+  path = "standalone_projects/#{name}.tar.gz"
+  upload name.titleize, path, "backups/#{ path }", name
+  project = @projects[name]
+
+  emails = h.fetch('email_recipients', [])
+  emails += 'sysadmins@zooniverse.org'
+
+  mail = Mail.new do
+    from 'team@zooniverse.org'
+    to emails
+    subject "#{ project[:name] } MongoDB Backup #{ @timestamp }"
+    body project[:email_line]
+  end
+  mail.deliver!
+  project.delete :email_line
 end
 
 sanitized_subject_fields = %w(activated_at classification_count coords created_at group group_id location metadata project_id random state updated_at workflow_ids zooniverse_id)
