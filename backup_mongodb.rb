@@ -121,7 +121,7 @@ config.fetch('standalone_projects', {}).each_pair do |name, h|
   mail = Mail.new do
     from 'team@zooniverse.org'
     to emails
-    subject "#{ project[:name] } MongoDB Backup #{ @timestamp }"
+    subject "#{name} MongoDB Backup #{ @timestamp }"
     body project[:email_line]
   end
   mail.deliver!
