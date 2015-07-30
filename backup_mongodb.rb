@@ -126,6 +126,7 @@ config.fetch('standalone_projects', {}).each_pair do |name, h|
   end
   mail.deliver!
   project.delete :email_line
+  @projects.delete name
 end
 
 sanitized_subject_fields = %w(activated_at classification_count coords created_at group group_id location metadata project_id random state updated_at workflow_ids zooniverse_id)
