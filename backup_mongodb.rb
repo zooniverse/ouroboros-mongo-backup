@@ -116,7 +116,7 @@ config.fetch('standalone_projects', {}).each_pair do |name, h|
   project = @projects[name]
 
   emails = h.fetch('email_recipients', [])
-  emails += 'sysadmins@zooniverse.org'
+  emails.push('sysadmins@zooniverse.org')
 
   mail = Mail.new do
     from 'team@zooniverse.org'
