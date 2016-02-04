@@ -203,12 +203,6 @@ puts "* Starting per-project backups"
     `#{ mongodump } --collection #{ project[:groups] } --out project_dumps/#{ project[:output] }`
   end
 
-  project_threads << Thread.new do
-    `#{ mongodump } --collection users --out project_dumps/#{ project[:output] } --query '{ "projects.#{ id }": { $exists:true } }'`
-    `mv project_dumps/#{ project[:output] }/ouroboros*/users.bson project_dumps/#{ project[:output] }/#{ project[:name] }_users.bson`
-    `mv project_dumps/#{ project[:output] }/ouroboros*/users.metadata.json project_dumps/#{ project[:output] }/#{ project[:name] }_users.metadata.json`
-  end
-
   sleep 1
   project_threads.map &:join
 
