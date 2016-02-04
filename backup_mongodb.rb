@@ -310,7 +310,7 @@ filtered_mail = Mail.new do
 end
 filtered_mail.deliver!
 
-config['project_mailings'].each do |id, emails|
+config.fetch('project_mailings', []).each do |id, emails|
   project = @projects[id]
 
   mail = Mail.new do
