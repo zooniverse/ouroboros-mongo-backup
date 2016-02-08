@@ -130,7 +130,7 @@ config.fetch('standalone_projects', {}).each_pair do |name, h|
 end
 
 sanitized_subject_fields = %w(activated_at classification_count coords created_at group group_id location metadata project_id random state updated_at workflow_ids zooniverse_id)
-sanitized_classification_fields = %w(annotations created_at project_id subject_ids subjects tutorial updated_at user_id workflow_id)
+sanitized_classification_fields = %w(annotations created_at project_id subject_ids subjects tutorial updated_at user_id user_name workflow_id)
 sanitized_group_fields = %w(categories classification_count created_at metadata name project_id project_name random state stats subjects updated_at zooniverse_id)
 
 puts "* Starting sanitized backups"
