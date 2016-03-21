@@ -310,20 +310,6 @@ filtered_mail = Mail.new do
 end
 filtered_mail.deliver!
 
-config.fetch('project_mailings', []).each do |id, emails|
-  project = @projects[id]
-
-  mail = Mail.new do
-    from 'team@zooniverse.org'
-    to emails
-    cc 'sysadmins@zooniverse.org'
-    subject "#{ project[:name] } MongoDB Backup #{ @timestamp }"
-    body project[:email_line]
-  end
-  mail.deliver!
-end
-
-
 puts "* Cleaning up"
 
 `rm -rf #{output_dir}/*`
