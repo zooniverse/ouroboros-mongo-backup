@@ -108,21 +108,25 @@ config.fetch('standalone_projects', {}).each_pair do |name, h|
   `mongodump --host #{h['host']}:#{h['port']} --db #{h['database']} -u #{h['username']} -p #{h['password']} --out standalone_dumps/#{name}/`
 
   `cd standalone_dumps; tar czvf #{name}.tar.gz #{name}`
+  `mv standalone_dumps/#{name}.tar.gz backups/standalone_projects/#{name}.tar.gz`
+
+  path = "standalone_projects/#{name}.tar.gz"
+  upload name.titleize, path, "backups/#{ path }", name
+  project = @projects[name]
 
   exclusions = h.fetch('sanitized_excludes', []).collect{
     |f| "--exclude '#{ f }.*'"
   }.join ' '
 
   if exclusions != ""
-    `tar -czv #{excludes} -f #{name}_sanitized.tar.gz #{name}`
+    `cd standalone_dumps; tar -czv #{excludes} -f #{name}_sanitized.tar.gz #{name}`
+    `mv standalone_dumps/#{name}_sanitized.tar.gz backups/standalone_projects/#{name}_sanitized.tar.gz`
+    path = "standalone_projects/#{name}_sanitized.tar.gz"
+    upload name.titleize, path, "backups/#{ path }", "#{ name }_sanitized"
+    project = @projects[name]
   end
 
   `rm -rf standalone_dumps/#{name}`
-  `mv standalone_dumps/#{name}.tar.gz backups/standalone_projects/#{name}.tar.gz`
-
-  path = "standalone_projects/#{name}.tar.gz"
-  upload name.titleize, path, "backups/#{ path }", name
-  project = @projects[name]
 
   emails = h.fetch('email_recipients', [])
   emails.push('sysadmins@zooniverse.org')
