@@ -108,6 +108,15 @@ config.fetch('standalone_projects', {}).each_pair do |name, h|
   `mongodump --host #{h['host']}:#{h['port']} --db #{h['database']} -u #{h['username']} -p #{h['password']} --out standalone_dumps/#{name}/`
 
   `cd standalone_dumps; tar czvf #{name}.tar.gz #{name}`
+
+  exclusions = h.fetch('sanitized_excludes', []).collect{
+    |f| "--exclude '#{ f }.*'"
+  }.join ' '
+
+  if exclusions != ""
+    `tar -czv #{excludes} -f #{name}_sanitized.tar.gz #{name}`
+  end
+
   `rm -rf standalone_dumps/#{name}`
   `mv standalone_dumps/#{name}.tar.gz backups/standalone_projects/#{name}.tar.gz`
 
@@ -298,7 +307,6 @@ mail = Mail.new do
   body email
 end
 mail.deliver!
-
 
 filtered_recipients = ['sysadmins@zooniverse.org'] + config.fetch('filtered_recipients', [])
 
