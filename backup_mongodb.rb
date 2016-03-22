@@ -119,11 +119,13 @@ config.fetch('standalone_projects', {}).each_pair do |name, h|
   }.join ' '
 
   if exclusions != ""
+    project.delete :email_line
+    @projects["#{ name }_sanitized"] = {}
     `cd standalone_dumps; tar -czv #{exclusions} -f #{name}_sanitized.tar.gz #{name}`
     `mv standalone_dumps/#{name}_sanitized.tar.gz backups/standalone_projects/#{name}_sanitized.tar.gz`
     path = "standalone_projects/#{name}_sanitized.tar.gz"
     upload name.titleize, path, "backups/#{ path }", "#{ name }_sanitized"
-    project = @projects[name]
+    project = @projects["#{ name }_sanitized"]
   end
 
   `rm -rf standalone_dumps/#{name}`
@@ -140,6 +142,7 @@ config.fetch('standalone_projects', {}).each_pair do |name, h|
   mail.deliver!
   project.delete :email_line
   @projects.delete name
+  @projects.delete "#{ name }_sanitized"
 end
 
 sanitized_subject_fields = %w(activated_at classification_count coords created_at group group_id location metadata project_id random state updated_at workflow_ids zooniverse_id)
