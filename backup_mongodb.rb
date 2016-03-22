@@ -119,7 +119,7 @@ config.fetch('standalone_projects', {}).each_pair do |name, h|
   }.join ' '
 
   if exclusions != ""
-    `cd standalone_dumps; tar -czv #{excludes} -f #{name}_sanitized.tar.gz #{name}`
+    `cd standalone_dumps; tar -czv #{exclusions} -f #{name}_sanitized.tar.gz #{name}`
     `mv standalone_dumps/#{name}_sanitized.tar.gz backups/standalone_projects/#{name}_sanitized.tar.gz`
     path = "standalone_projects/#{name}_sanitized.tar.gz"
     upload name.titleize, path, "backups/#{ path }", "#{ name }_sanitized"
