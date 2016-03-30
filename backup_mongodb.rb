@@ -36,7 +36,7 @@ end
 puts "Found secondary MongoDB server: #{mongo_host}"
 
 AWS.config access_key_id: config['aws']['s3']['access_key_id'], secret_access_key: config['aws']['s3']['secret_access_key']
-s3 = AWS::S3.new
+s3 = AWS::S3.new(:s3_signature_version => :v4)
 @bucket = s3.buckets[config['aws']['s3']['bucket']]
 @mutex = Mutex.new
 
@@ -85,8 +85,8 @@ sandboxmongoexport = "mongoexport --host #{config['mongo']['sandbox']['host']} -
 
 def upload(name, path, file_path, id = nil)
   dump_object = @bucket.objects["databases/#{ @timestamp }/#{ path }"]
-  dump_object.write file: file_path
-  url = dump_object.url_for(:read, expires: 604800, secure: true).to_s
+  dump_object.upload_file file_path, {server_side_encryption: 'aws:kms'}
+  url = dump_object.presigned_url(:get, expires_in: 604800)
   file_size = `stat -c %s #{ file_path }`
 
   if id
