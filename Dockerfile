@@ -1,4 +1,4 @@
-FROM zooniverse/ruby:2.1
+FROM ruby:2.1
 
 ENV DEBIAN_FRONTEND noninteractive
 
@@ -8,7 +8,7 @@ ADD Gemfile /app/
 ADD Gemfile.lock /app/
 
 RUN apt-get update && apt-get upgrade -y && \
-    apt-get install -y mongodb-clients && \
+    apt-get install -y mongodb-clients locales && \
     locale-gen en_US.UTF-8 && \
     bundle install && \
     mkdir /out
