@@ -83,6 +83,7 @@ mongo = nil; connection = nil
 GC.start
 
 mongodump = "mongodump --host #{mongo_host} --db #{config['mongo']['ouroboros']['db_name']} --username #{config['mongo']['ouroboros']['user']} --password #{config['mongo']['ouroboros']['pass']}"
+mongodump_staging = "mongodump --host #{config['mongo']['staging']['host']} --db #{config['mongo']['staging']['db_name']}"
 mongoexport = "mongoexport --host #{mongo_host} --db #{config['mongo']['ouroboros']['db_name']} --username #{config['mongo']['ouroboros']['user']} --password #{config['mongo']['ouroboros']['pass']}"
 sandboxmongoexport = "mongoexport --host #{config['mongo']['sandbox']['host']} --db #{config['mongo']['sandbox']['db_name']} --username #{config['mongo']['sandbox']['user']} --password #{config['mongo']['sandbox']['pass']}"
 
@@ -283,6 +284,12 @@ talk_only_file_name = "ouroboros_#{ @timestamp }_talk_only.tar.gz"
 
 `rm -rf ouroboros_#{ @timestamp }`
 
+`#{ mongodump_staging } --out ouroboros_staging_#{ @timestamp }`
+staging_file_name = "ouroboros_staging_#{ @timestamp }.tar.gz"
+`tar czvf #{ staging_file_name } ouroboros_staging_#{ @timestamp }`
+`mv #{ staging_file_name } backups/`
+`rm -rf ouroboros_staging_#{ @timestamp }`
+
 Dir.chdir 'backups'
 
 puts "    * Uploading complete backup"
@@ -291,6 +298,8 @@ puts "    * Uploading filtered backup"
 filtered_upload = upload 'Filtered Ouroboros', filtered_file_name, filtered_file_name
 puts "    * Uploading talk backup"
 talk_upload = upload 'Talk only', talk_only_file_name, talk_only_file_name
+puts "    * Uploading staging backup"
+staging_upload = upload 'Staging', staging_file_name, staging_file_name
 
 puts "* Sending notification emails"
 
@@ -298,7 +307,8 @@ email = [
   "Ouroboros Backup #{ @timestamp }: 1 complete backup and #{ @projects.length } project backups.",
   complete_upload,
   filtered_upload,
-  talk_upload
+  talk_upload,
+  staging_upload
 ]
 
 filtered_email = [
