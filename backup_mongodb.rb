@@ -204,41 +204,6 @@ config['sanitized_projects'].each_pair do |id, emails|
   project.delete :email_line
 end
 
-puts "* Starting per-project backups"
-
-@projects.each_pair do |id, project|
-  puts "    * Backing up #{project[:name]}"
-
-  project_threads = []
-
-  project_threads << Thread.new do
-    `#{ mongodump } --collection #{ project[:classifications] } --out project_dumps/#{ project[:output] }`
-  end
-
-  project_threads << Thread.new do
-    `#{ mongodump } --collection #{ project[:subjects] } --out project_dumps/#{ project[:output] }`
-  end
-
-  project_threads << Thread.new do
-    `#{ mongodump } --collection #{ project[:groups] } --out project_dumps/#{ project[:output] }`
-  end
-
-  sleep 1
-  project_threads.map &:join
-
-  Dir["project_dumps/#{ project[:output] }/ouroboros*/*"].each do |file|
-    `mv #{ file } project_dumps/#{ project[:output] }/`
-  end
-
-  `rm -rf project_dumps/#{ project[:output] }/ouroboros*`
-  `cd project_dumps; tar czvf #{ project[:output] }.tar.gz #{ project[:output] }`
-  `rm -rf project_dumps/#{ project[:output] }`
-  `mv project_dumps/#{ project[:output] }.tar.gz backups/ouroboros_projects/#{ project[:output] }.tar.gz`
-
-  path = "ouroboros_projects/#{ project[:output] }.tar.gz"
-  upload project[:name].titleize, path, "backups/#{ path }", id
-end
-
 `rm -rf project_dumps`
 
 puts "* Starting complete Ouroboros backup"
@@ -304,7 +269,7 @@ staging_upload = upload 'Staging', staging_file_name, staging_file_name
 puts "* Sending notification emails"
 
 email = [
-  "Ouroboros Backup #{ @timestamp }: 1 complete backup and #{ @projects.length } project backups.",
+  "Ouroboros Backup #{ @timestamp }: 1 complete backup.",
   complete_upload,
   filtered_upload,
   talk_upload,
@@ -312,12 +277,11 @@ email = [
 ]
 
 filtered_email = [
-  "Ouroboros Backup #{ @timestamp }: 1 complete backup and #{ @projects.length } project backups.",
+  "Ouroboros Backup #{ @timestamp }: 1 complete backup.",
   filtered_upload,
   talk_upload
 ].join "\n\n"
 
-@projects.each_pair{ |id, project| email << project[:email_line] }
 email = email.join "\n\n"
 
 mail = Mail.new do
