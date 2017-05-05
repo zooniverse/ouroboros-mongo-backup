@@ -183,6 +183,10 @@ config['sanitized_projects'].each_pair do |id, emails|
     `#{ export_cmd } --collection #{ project[:groups] } --fields #{ sanitized_group_fields.join(',') } --out project_dumps/#{ sanitized_output }/#{ project[:groups] }.json`
   end
 
+  sanitized_project_threads << Thread.new do
+    `#{ export_cmd } --collection projects -q '{_id: ObjectId("#{id}")}' --out project_dumps/#{ sanitized_output }/projects.json`
+  end
+
   sleep 1
   sanitized_project_threads.map &:join
 
