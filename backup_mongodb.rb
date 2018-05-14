@@ -109,7 +109,7 @@ config.fetch('standalone_projects', {}).each_pair do |name, h|
   puts "    * Backing up #{name}"
 
   `mkdir -p standalone_dumps/#{name}`
-  `mongodump --host #{h['host']}:#{h['port']} --db #{h['database']} -u #{h['username']} -p #{h['password']} --out standalone_dumps/#{name}/`
+  `mongodump --excludeCollectionsWithPrefix=system --host #{h['host']}:#{h['port']} --db #{h['database']} -u #{h['username']} -p #{h['password']} --out standalone_dumps/#{name}/`
 
   `cd standalone_dumps; tar czvf #{name}.tar.gz #{name}`
   `mv standalone_dumps/#{name}.tar.gz backups/standalone_projects/#{name}.tar.gz`
