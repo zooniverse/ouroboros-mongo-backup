@@ -88,7 +88,7 @@ mongoexport = "mongoexport --host #{mongo_host} --db #{config['mongo']['ouroboro
 sandboxmongoexport = "mongoexport --host #{config['mongo']['sandbox']['host']} --db #{config['mongo']['sandbox']['db_name']} --username #{config['mongo']['sandbox']['user']} --password #{config['mongo']['sandbox']['pass']}"
 
 def upload(name, path, file_path, id = nil)
-  dump_object = @bucket.object("databases/#{ @timestamp }/#{ path }")
+  dump_object = @bucket.object("#{config['aws']['s3']['prefix']}databases/#{ @timestamp }/#{ path }")
   dump_object.upload_file file_path, {server_side_encryption: 'aws:kms'}
   url = dump_object.presigned_url(:get, expires_in: 604800)
   file_size = `stat -c %s #{ file_path }`
