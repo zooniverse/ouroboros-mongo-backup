@@ -4,7 +4,7 @@ require 'mongo'
 require 'mail'
 require 'yaml'
 
-config = YAML.load(File.read('/config.yml'))
+@config = YAML.load(File.read('/config.yml'))
 
 mongo_host = nil
 
