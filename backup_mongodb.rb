@@ -85,7 +85,7 @@ GC.start
 
 mongodump = "mongodump --host #{mongo_host} --db #{$config['mongo']['ouroboros']['db_name']} --username #{$config['mongo']['ouroboros']['user']} --password #{$config['mongo']['ouroboros']['pass']}"
 mongodump_staging = "mongodump --host #{$config['mongo']['staging']['host']} --db #{$config['mongo']['staging']['db_name']}"
-mongoexport = "mongoexport --host #{mongo_host} --db #{$config['mongo']['ouroboros']['db_name']} --username #{config['mongo']['ouroboros']['user']} --password #{$config['mongo']['ouroboros']['pass']}"
+mongoexport = "mongoexport --host #{mongo_host} --db #{$config['mongo']['ouroboros']['db_name']} --username #{$config['mongo']['ouroboros']['user']} --password #{$config['mongo']['ouroboros']['pass']}"
 sandboxmongoexport = "mongoexport --host #{$config['mongo']['sandbox']['host']} --db #{$config['mongo']['sandbox']['db_name']} --username #{$config['mongo']['sandbox']['user']} --password #{$config['mongo']['sandbox']['pass']}"
 
 def upload(name, path, file_path, id = nil)
