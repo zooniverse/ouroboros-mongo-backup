@@ -4,17 +4,17 @@ require 'mongo'
 require 'mail'
 require 'yaml'
 
-@config = YAML.load(File.read('/config.yml'))
+$config = YAML.load(File.read('/config.yml'))
 
 mongo_host = nil
 
 output_dir = '/out/'
 
-@config['mongo']['hosts'].each do |host|
+$conifg['mongo']['hosts'].each do |host|
   secondary_check = <<-SH
     mongo --quiet #{host}/admin --eval "
-    db.auth('#{@config['mongo']['admin']['user']}',
-      '#{@config['mongo']['admin']['pass']}');
+    db.auth('#{$conifg['mongo']['admin']['user']}',
+      '#{$conifg['mongo']['admin']['pass']}');
     rs.status().members.forEach(function(member) {
       if(member.self) {
         print(member.stateStr === 'SECONDARY');
@@ -36,22 +36,23 @@ end
 puts "Found secondary MongoDB server: #{mongo_host}"
 
 Aws.config.update({
-  credentials: Aws::Credentials.new(@config['aws']['s3']['access_key_id'], @config['aws']['s3']['secret_access_key']),
+  credentials: Aws::Credentials.new($conifg['aws']['s3']['access_key_id'], $conifg['aws']['s3']['secret_access_key']),
   region: 'us-east-1'
 })
 s3 = Aws::S3::Resource.new(signature_version: 'v4')
-@bucket = s3.bucket(@config['aws']['s3']['bucket'])
+@bucket = s3.bucket($conifg['aws']['s3']['bucket'])
 @mutex = Mutex.new
+
 
 Mail.defaults do
   delivery_method(:smtp, {
     enable_starttls_auto: true,
-    address: @config['aws']['ses']['address'],
-    port: @config['aws']['ses']['port'],
-    domain: @config['aws']['ses']['domain'],
+    address: $conifg['aws']['ses']['address'],
+    port: $conifg['aws']['ses']['port'],
+    domain: $conifg['aws']['ses']['domain'],
     authentication: :plain,
-    user_name: @config['aws']['ses']['user_name'],
-    password: @config['aws']['ses']['password']
+    user_name: $conifg['aws']['ses']['user_name'],
+    password: $conifg['aws']['ses']['password']
   })
 end
 
@@ -61,9 +62,9 @@ Dir.mkdir 'backups'
 Dir.mkdir "backups/ouroboros_projects"
 Dir.mkdir "backups/standalone_projects"
 
-connection = Mongo::ReplSetConnection.new @config['mongo']['hosts'], { name: @config['mongo']['ouroboros']['rs_name'] }
-mongo = connection[@config['mongo']['ouroboros']['db_name']]
-mongo.authenticate @config['mongo']['ouroboros']['user'], @config['mongo']['ouroboros']['pass']
+connection = Mongo::ReplSetConnection.new $conifg['mongo']['hosts'], { name: $conifg['mongo']['ouroboros']['rs_name'] }
+mongo = connection[$conifg['mongo']['ouroboros']['db_name']]
+mongo.authenticate $conifg['mongo']['ouroboros']['user'], $conifg['mongo']['ouroboros']['pass']
 
 @projects = { }
 mongo['projects'].find({ }, { fields: ['name'] }).to_a.each do |project|
@@ -82,13 +83,13 @@ mongo = nil; connection = nil
 
 GC.start
 
-mongodump = "mongodump --host #{mongo_host} --db #{@config['mongo']['ouroboros']['db_name']} --username #{@config['mongo']['ouroboros']['user']} --password #{@config['mongo']['ouroboros']['pass']}"
-mongodump_staging = "mongodump --host #{@config['mongo']['staging']['host']} --db #{@config['mongo']['staging']['db_name']}"
-mongoexport = "mongoexport --host #{mongo_host} --db #{@config['mongo']['ouroboros']['db_name']} --username #{config['mongo']['ouroboros']['user']} --password #{@config['mongo']['ouroboros']['pass']}"
-sandboxmongoexport = "mongoexport --host #{@config['mongo']['sandbox']['host']} --db #{@config['mongo']['sandbox']['db_name']} --username #{@config['mongo']['sandbox']['user']} --password #{@config['mongo']['sandbox']['pass']}"
+mongodump = "mongodump --host #{mongo_host} --db #{$conifg['mongo']['ouroboros']['db_name']} --username #{$conifg['mongo']['ouroboros']['user']} --password #{$conifg['mongo']['ouroboros']['pass']}"
+mongodump_staging = "mongodump --host #{$conifg['mongo']['staging']['host']} --db #{$conifg['mongo']['staging']['db_name']}"
+mongoexport = "mongoexport --host #{mongo_host} --db #{$conifg['mongo']['ouroboros']['db_name']} --username #{config['mongo']['ouroboros']['user']} --password #{$conifg['mongo']['ouroboros']['pass']}"
+sandboxmongoexport = "mongoexport --host #{$conifg['mongo']['sandbox']['host']} --db #{$conifg['mongo']['sandbox']['db_name']} --username #{$conifg['mongo']['sandbox']['user']} --password #{$conifg['mongo']['sandbox']['pass']}"
 
 def upload(name, path, file_path, id = nil)
-  dump_object = @bucket.object("#{@config['aws']['s3']['prefix']}databases/#{ @timestamp }/#{ path }")
+  dump_object = @bucket.object("#{$conifg['aws']['s3']['prefix']}databases/#{ @timestamp }/#{ path }")
   dump_object.upload_file file_path, {server_side_encryption: 'aws:kms'}
   url = dump_object.presigned_url(:get, expires_in: 604800)
   file_size = `stat -c %s #{ file_path }`
@@ -104,7 +105,7 @@ end
 
 puts "* Starting standalone backups"
 
-@config.fetch('standalone_projects', {}).each_pair do |name, h|
+$conifg.fetch('standalone_projects', {}).each_pair do |name, h|
   @projects[name] = {}
   puts "    * Backing up #{name}"
 
@@ -155,7 +156,7 @@ sanitized_group_fields = %w(categories classification_count created_at metadata 
 
 puts "* Starting sanitized backups"
 
-@config['sanitized_projects'].each_pair do |id, emails|
+$conifg['sanitized_projects'].each_pair do |id, emails|
   project = @projects[id]
 
   puts "    * Backing up #{project[:name]}"
@@ -165,7 +166,7 @@ puts "* Starting sanitized backups"
 
   `mkdir -p project_dumps/#{ sanitized_output }`
 
-  if @config['sandbox_projects'].include? id
+  if $conifg['sandbox_projects'].include? id
     export_cmd = sandboxmongoexport
   else
     export_cmd = mongoexport
@@ -296,7 +297,7 @@ mail = Mail.new do
 end
 mail.deliver!
 
-filtered_recipients = ['sysadmins@zooniverse.org'] + @config.fetch('filtered_recipients', [])
+filtered_recipients = ['sysadmins@zooniverse.org'] + $conifg.fetch('filtered_recipients', [])
 
 filtered_mail = Mail.new do
   from 'team@zooniverse.org'
